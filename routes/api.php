@@ -11,10 +11,13 @@ use App\Http\Controllers\Api\Admin\ProductController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\Admin\CouponController;
+use App\Http\Controllers\Api\Admin\DashboardController;
+use App\Http\Controllers\Api\Admin\OrderStatusController;
 use App\Http\Controllers\Api\Admin\ProductImageController;
 use App\Http\Controllers\Api\Admin\ProductVariantController;
 use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\CouponApplyController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ReviewController;
@@ -120,6 +123,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource(
             'coupons',
             CouponController::class
+        );
+        Route::get(
+            'dashboard',
+            [DashboardController::class, 'index']
         );
     });
 
@@ -249,4 +256,14 @@ Route::middleware('auth:sanctum')->group(function () {
             [ReviewController::class, 'destroy']
         );
     });
+
+    Route::put(
+        'orders/{order}/status',
+        [OrderStatusController::class, 'updateStatus']
+    );
+
+    Route::get(
+        'notifications',
+        [NotificationController::class, 'index']
+    );
 });

@@ -7,15 +7,17 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\OrderItem;
 use Illuminate\Support\Str;
-use Illuminate\Http\Request;
+use App\Notifications\OrderPlacedNotification;
 use Illuminate\Support\Facades\DB;
 use App\Traits\ApiResponseTrait;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CheckoutRequest;
+use App\Jobs\SendOrderNotificationJob;
 
 class CheckoutController extends Controller
 {
     use ApiResponseTrait;
+
 
     public function checkout(CheckoutRequest $request)
     {
@@ -75,6 +77,10 @@ class CheckoutController extends Controller
                 'status' => 'pending',
             ]);
 
+            SendOrderNotificationJob::dispatch(
+                auth()->user(),
+                $order
+            );
             // CREATE ORDER ITEMS
             foreach ($cartItems as $item) {
 
@@ -117,7 +123,6 @@ class CheckoutController extends Controller
                     'address'
                 ])
             );
-
         } catch (\Exception $e) {
 
             DB::rollBack();

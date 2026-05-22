@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
 
 class ProductController extends Controller
 {
@@ -19,29 +20,195 @@ class ProductController extends Controller
 
     public function index(Request $request)
     {
-        $products = Product::with([
-            'category',
-            'brand'
-        ])
+        // $products = Product::with([
 
-            ->when($request->search, function ($query) use ($request) {
+        //     'category',
 
-                $query->where('name', 'LIKE', '%' . $request->search . '%');
-            })
+        //     'brand',
 
-            ->when($request->category_id, function ($query) use ($request) {
+        //     'images'
+        // ])
 
-                $query->where('category_id', $request->category_id);
-            })
+        //     ->when(
+        //         $request->search,
+        //         function ($query) use ($request) {
 
-            ->when($request->brand_id, function ($query) use ($request) {
+        //             $query->where(
+        //                 'name',
+        //                 'LIKE',
+        //                 '%' . $request->search . '%'
+        //             );
+        //         }
+        //     )
 
-                $query->where('brand_id', $request->brand_id);
-            })
+        //     ->when(
+        //         $request->category_id,
+        //         function ($query) use ($request) {
 
-            ->latest()
+        //             $query->where(
+        //                 'category_id',
+        //                 $request->category_id
+        //             );
+        //         }
+        //     )
 
-            ->paginate(10);
+        //     ->when(
+        //         $request->brand_id,
+        //         function ($query) use ($request) {
+
+        //             $query->where(
+        //                 'brand_id',
+        //                 $request->brand_id
+        //             );
+        //         }
+        //     )
+        //     ->when(
+        //         $request->min_price,
+        //         function ($query) use ($request) {
+
+        //             $query->where(
+        //                 'price',
+        //                 '>=',
+        //                 $request->min_price
+        //             );
+        //         }
+        //     )
+
+        //     ->when(
+        //         $request->max_price,
+        //         function ($query) use ($request) {
+
+        //             $query->where(
+        //                 'price',
+        //                 '<=',
+        //                 $request->max_price
+        //             );
+        //         }
+        //     )
+
+        //     ->when(
+        //         $request->rating,
+        //         function ($query) use ($request) {
+
+        //             $query->where(
+        //                 'average_rating',
+        //                 '>=',
+        //                 $request->rating
+        //             );
+        //         }
+        //     )
+        //     ->when(
+        //         $request->sort,
+        //         function ($query) use ($request) {
+
+        //             switch ($request->sort) {
+
+        //                 case 'latest':
+
+        //                     $query->latest();
+
+        //                     break;
+
+        //                 case 'oldest':
+
+        //                     $query->oldest();
+
+        //                     break;
+
+        //                 case 'price_low':
+
+        //                     $query->orderBy(
+        //                         'price',
+        //                         'asc'
+        //                     );
+
+        //                     break;
+
+        //                 case 'price_high':
+
+        //                     $query->orderBy(
+        //                         'price',
+        //                         'desc'
+        //                     );
+
+        //                     break;
+
+        //                 case 'rating':
+
+        //                     $query->orderBy(
+        //                         'average_rating',
+        //                         'desc'
+        //                     );
+
+        //                     break;
+
+        //                 default:
+
+        //                     $query->latest();
+
+        //                     break;
+        //             }
+        //         }
+        //     )
+
+        //     ->paginate(10);
+
+        $products = Cache::remember(
+
+            'products_list',
+
+            600,
+
+            function () use ($request) {
+
+                return Product::with([
+
+                    'category',
+
+                    'brand',
+
+                    'images'
+                ])
+
+                    ->when(
+                        $request->search,
+                        function ($query) use ($request) {
+
+                            $query->where(
+                                'name',
+                                'LIKE',
+                                '%' . $request->search . '%'
+                            );
+                        }
+                    )
+
+                    ->when(
+                        $request->category_id,
+                        function ($query) use ($request) {
+
+                            $query->where(
+                                'category_id',
+                                $request->category_id
+                            );
+                        }
+                    )
+
+                    ->when(
+                        $request->brand_id,
+                        function ($query) use ($request) {
+
+                            $query->where(
+                                'brand_id',
+                                $request->brand_id
+                            );
+                        }
+                    )
+
+                    ->latest()
+
+                    ->paginate(10);
+            }
+        );
 
         return $this->successResponse(
             'Product list fetched successfully',
@@ -85,7 +252,7 @@ class ProductController extends Controller
 
             'image' => $imagePath,
         ]);
-
+        Cache::forget('products_list');
         return $this->successResponse(
             'Product created successfully',
             new ProductResource($product)
@@ -145,6 +312,7 @@ class ProductController extends Controller
             'image' => $imagePath,
         ]);
 
+        Cache::forget('products_list');
         return $this->successResponse(
             'Product updated successfully',
             new ProductResource($product)
@@ -157,7 +325,7 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         $product->delete();
-
+        Cache::forget('products_list');
         return $this->successResponse(
             'Product deleted successfully'
         );

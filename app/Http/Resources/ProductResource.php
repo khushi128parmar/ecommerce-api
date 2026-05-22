@@ -14,7 +14,7 @@ class ProductResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-       return [
+        return [
 
             'id' => $this->id,
 
@@ -36,6 +36,10 @@ class ProductResource extends JsonResource
                 ? asset('storage/' . $this->image)
                 : null,
 
+            'average_rating' => $this->average_rating,
+
+            'total_reviews' => $this->total_reviews,
+            
             'category' => [
                 'id' => $this->category?->id,
                 'name' => $this->category?->name,
@@ -47,6 +51,9 @@ class ProductResource extends JsonResource
             ],
 
             'created_at' => $this->created_at,
+
+
+
         ];
     }
 }
