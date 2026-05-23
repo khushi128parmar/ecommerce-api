@@ -7,12 +7,14 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\OrderItem;
 use Illuminate\Support\Str;
-use App\Notifications\OrderPlacedNotification;
 use Illuminate\Support\Facades\DB;
 use App\Traits\ApiResponseTrait;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CheckoutRequest;
 use App\Jobs\SendOrderNotificationJob;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OrderPlacedMail;
+use App\Jobs\SendOrderEmailJob;
 
 class CheckoutController extends Controller
 {
@@ -74,13 +76,15 @@ class CheckoutController extends Controller
 
                 'payment_status' => 'pending',
 
-                'status' => 'pending',
+                'order_status' => 'pending',
             ]);
 
             SendOrderNotificationJob::dispatch(
-                auth()->user(),
+                $request->user(),
                 $order
             );
+            //send email to user
+            SendOrderEmailJob::dispatch($order);
             // CREATE ORDER ITEMS
             foreach ($cartItems as $item) {
 
@@ -99,10 +103,7 @@ class CheckoutController extends Controller
                     ),
                 ]);
 
-                // REDUCE STOCK
-                $product = Product::find($item->product_id);
-
-                $product->decrement(
+                $item->product->decrement(
                     'stock',
                     $item->quantity
                 );

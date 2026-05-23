@@ -34,10 +34,13 @@ Route::prefix('auth')->group(function () {
     Route::post(
         'login',
         [AuthController::class, 'login']
-    );
+    )->middleware('throttle:login');
 });
 
-
+Route::post(
+    'stripe/webhook',
+    [PaymentController::class, 'webhook']
+);
 // AUTHENTICATED ROUTES
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -231,6 +234,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post(
             '/{order}/failed',
             [PaymentController::class, 'paymentFailed']
+        );
+        Route::post(
+            '/{order}/stripe',
+            [PaymentController::class, 'stripeCheckout']
         );
     });
 
