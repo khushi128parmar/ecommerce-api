@@ -7,12 +7,13 @@ use App\Models\Order;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 
 class InvoiceController extends Controller
 {
     public function download(Order $order)
     {
-        if ($order->user_id !== auth()->id()) {
+        if ($order->user_id !== Auth::id()) {
 
             return response()->json([
 
